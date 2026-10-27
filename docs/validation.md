@@ -21,6 +21,6 @@ Executed in the Linux cloud workspace on 2026-10-27, with Temurin JDK 21.0.13, t
 - **Android device/emulator UI and platform secure-store tests:** not executed. JVM tests do not establish Keystore/Keychain behavior, device VPN access, enterprise certificate trust, rotation, reinstall or locked-device behavior.
 - **Real Bitbucket integration:** not executed or attempted. All test payloads and accounts are fictional and all HTTP tests use MockEngine.
 - **Fresh documentation cross-check:** direct requests to the official Atlassian 8.19 references were denied by the environment egress proxy (CONNECT 403). See `bitbucket-api.md`. Required documentation domains were added to the saved environment draft; that does not apply the network policy to this running instance. Endpoint mocks are not proof of live 8.19.26 compatibility.
-- **GitHub Actions:** workflow added, not remotely executed in this task. No push/publication was performed.
+- **GitHub Actions:** workflow added. The results above are local checks; remote workflow results were not verified in this report and must be checked on GitHub.
 
 The foundation supports host development, offline unit testing and Android APK builds. No claim of iOS or production readiness is made. PR diffs and review actions remain later milestones.
