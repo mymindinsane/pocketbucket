@@ -11,11 +11,21 @@ run_logged() {
   local status=${PIPESTATUS[0]}
   set -e
   if (( status != 0 )); then
-    {
-      printf '## Failed iOS check: %s\n\n```text\n' "$name"
-      tail -n 100 "build/ci/$name.log"
-      printf '\n```\n'
-    } >> "${GITHUB_STEP_SUMMARY:-build/ci/summary.md}"
+    python3 - "$name" <<'PYTHON'
+import os, re, sys
+from pathlib import Path
+name = sys.argv[1]
+lines = Path(f"build/ci/{name}.log").read_text(errors="replace").splitlines()
+# Kotlin errors can precede a long Gradle stack trace. Keep them in the summary
+# and in an annotation so the cause is visible without downloading private logs.
+errors = [line for line in lines if re.search(r"(^e: |error:|FAILURE:|What went wrong|^> )", line)]
+diagnostic = "\n".join(dict.fromkeys(errors + lines[-60:]))[-30000:]
+with open(os.environ.get("GITHUB_STEP_SUMMARY", "build/ci/summary.md"), "a") as summary:
+    summary.write(f"## Failed iOS check: {name}\n\n```text\n{diagnostic}\n```\n")
+if os.environ.get("GITHUB_ACTIONS") == "true":
+    escaped = diagnostic.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    print(f"::error title={name} failed::{escaped}")
+PYTHON
   fi
   return "$status"
 }
