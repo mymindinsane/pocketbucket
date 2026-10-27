@@ -4,6 +4,8 @@ An open-source mobile repository browser and pull request client for **self-host
 
 **Unofficial client; not affiliated with or endorsed by Atlassian. Bitbucket Cloud is not supported.**
 
+A detailed [Russian beginner guide](docs/guide.ru.md) explains the implementation, Kotlin basics, architecture, security and local launch. See also the [diff review](docs/review.md) and [test matrix](docs/testing.md).
+
 ## Milestone 1
 
 - HTTPS connection with username/password (REST Basic authentication) or a personal access token (Bearer).

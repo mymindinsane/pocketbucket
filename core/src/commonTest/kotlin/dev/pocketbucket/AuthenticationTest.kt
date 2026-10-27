@@ -24,6 +24,21 @@ class AuthenticationTest {
             assertFalse(error.message.orEmpty().contains("a\r\nb"))
         }
     }
+    @Test fun emptyPasswordAndBlankOrControlCharacterUsernamesAreRejected() {
+        for (username in listOf(" ", "\t", "alex\u0000demo", "alex\rdemo")) {
+            val error = assertFailsWith<IllegalArgumentException> { Credentials.Basic(username, "fictional-secret") }
+            assertFalse(error.message.orEmpty().contains("fictional-secret"))
+        }
+        assertFailsWith<IllegalArgumentException> { Credentials.Basic("alex.demo", "") }
+        for (token in listOf("fictional-token\t", "fictional\u0000token", " fictional-token")) {
+            assertFailsWith<IllegalArgumentException> { Credentials.Token(token) }
+        }
+    }
+    @Test fun passwordWhitespaceAndColonsArePreservedRatherThanTrimmed() {
+        // Spaces and colons are valid password characters, even though the username cannot contain a colon.
+        assertEquals("Basic YWxleDogcGFzcyA=", Credentials.Basic("alex", " pass ").authorizationHeader())
+        assertEquals("Basic YWxleDphOmI=", Credentials.Basic("alex", "a:b").authorizationHeader())
+    }
     @Test fun httpsAndContextPathAreSupported() {
         assertEquals("https://code.example.org/bitbucket", ServerUrl.parse(" https://code.example.org/bitbucket/ ").value)
     }

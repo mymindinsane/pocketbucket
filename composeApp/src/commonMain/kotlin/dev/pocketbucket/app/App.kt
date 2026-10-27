@@ -57,47 +57,50 @@ fun App(viewModel: PocketBucketViewModel) {
                     } else if (state.route == Route.Connection) {
                         ConnectionScreen(state.loading, viewModel::connect, viewModel::disconnect)
                     } else {
-                        PullToRefreshBox(isRefreshing = state.loading, onRefresh = viewModel::refresh) {
-                            LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp),
-                                contentPadding = PaddingValues(vertical = 12.dp)) {
-                                when (val route = state.route) {
-                                    Route.Projects -> {
-                                        if (state.projects.isEmpty() && !state.loading && state.error == null) item { Text("No accessible projects.") }
-                                        items(state.projects, key = { it.key }) { project ->
-                                            Entry(project.name, project.key) { viewModel.open(Route.Repositories(project)) }
-                                        }
-                                    }
-                                    is Route.Repositories -> {
-                                        if (state.repositories.isEmpty() && !state.loading && state.error == null) item { Text("No repositories in this project.") }
-                                        items(state.repositories, key = { it.id }) { repo ->
-                                            Entry(repo.name, repo.slug) { viewModel.open(Route.PullRequests(repo)) }
-                                        }
-                                    }
-                                    is Route.PullRequests -> {
-                                        if (state.pullRequests.isEmpty() && !state.loading && state.error == null) item { Text("No open pull requests.") }
-                                        items(state.pullRequests, key = { it.id }) { pr ->
-                                            Entry("#${pr.id} ${pr.title}",
-                                                "${pr.author.displayName} · ${pr.state}\n${pr.from.displayName} → ${pr.to.displayName}") {
-                                                viewModel.open(Route.Details(route.repository, pr.id))
+                        // Start each destination at the top, while preserving scroll on refresh.
+                        key(state.route) {
+                            PullToRefreshBox(isRefreshing = state.loading, onRefresh = viewModel::refresh) {
+                                LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    contentPadding = PaddingValues(vertical = 12.dp)) {
+                                    when (val route = state.route) {
+                                        Route.Projects -> {
+                                            if (state.projects.isEmpty() && !state.loading && state.error == null) item { Text("No accessible projects.") }
+                                            items(state.projects, key = { it.key }) { project ->
+                                                Entry(project.name, project.key) { viewModel.open(Route.Repositories(project)) }
                                             }
                                         }
-                                    }
-                                    is Route.Details -> state.detail?.let { pr ->
-                                        item { Text(pr.title, style = MaterialTheme.typography.headlineSmall) }
-                                        item { Text("${pr.author.displayName} · ${pr.state}") }
-                                        item { Text("${pr.from.repository.project.key}/${pr.from.repository.name}: ${pr.from.displayName} → ${pr.to.repository.project.key}/${pr.to.repository.name}: ${pr.to.displayName}") }
-                                        item { Text(pr.description?.takeIf { it.isNotBlank() } ?: "No description.") }
-                                        item { Text("Reviewers", style = MaterialTheme.typography.titleMedium) }
-                                        if (pr.reviewers.isEmpty()) item { Text("No reviewers assigned.") }
-                                        items(pr.reviewers, key = { it.user.name }) { reviewer ->
-                                            Text("${reviewer.user.displayName} · ${reviewer.status}")
+                                        is Route.Repositories -> {
+                                            if (state.repositories.isEmpty() && !state.loading && state.error == null) item { Text("No repositories in this project.") }
+                                            items(state.repositories, key = { it.id }) { repo ->
+                                                Entry(repo.name, repo.slug) { viewModel.open(Route.PullRequests(repo)) }
+                                            }
                                         }
+                                        is Route.PullRequests -> {
+                                            if (state.pullRequests.isEmpty() && !state.loading && state.error == null) item { Text("No open pull requests.") }
+                                            items(state.pullRequests, key = { it.id }) { pr ->
+                                                Entry("#${pr.id} ${pr.title}",
+                                                    "${pr.author.displayName} · ${pr.state}\n${pr.from.displayName} → ${pr.to.displayName}") {
+                                                    viewModel.open(Route.Details(route.repository, pr.id))
+                                                }
+                                            }
+                                        }
+                                        is Route.Details -> state.detail?.let { pr ->
+                                            item { Text(pr.title, style = MaterialTheme.typography.headlineSmall) }
+                                            item { Text("${pr.author.displayName} · ${pr.state}") }
+                                            item { Text("${pr.from.repository.project.key}/${pr.from.repository.name}: ${pr.from.displayName} → ${pr.to.repository.project.key}/${pr.to.repository.name}: ${pr.to.displayName}") }
+                                            item { Text(pr.description?.takeIf { it.isNotBlank() } ?: "No description.") }
+                                            item { Text("Reviewers", style = MaterialTheme.typography.titleMedium) }
+                                            if (pr.reviewers.isEmpty()) item { Text("No reviewers assigned.") }
+                                            items(pr.reviewers, key = { it.user.name }) { reviewer ->
+                                                Text("${reviewer.user.displayName} · ${reviewer.status}")
+                                            }
+                                        }
+                                        Route.Connection -> Unit
                                     }
-                                    Route.Connection -> Unit
-                                }
-                                if (state.loading) item { CircularProgressIndicator(Modifier.padding(16.dp)) }
-                                if (state.nextStart != null) item {
-                                    OutlinedButton(onClick = viewModel::loadMore, enabled = !state.loading) { Text("Load more") }
+                                    if (state.loading) item { CircularProgressIndicator(Modifier.padding(16.dp)) }
+                                    if (state.nextStart != null) item {
+                                        OutlinedButton(onClick = viewModel::loadMore, enabled = !state.loading) { Text("Load more") }
+                                    }
                                 }
                             }
                         }

@@ -110,19 +110,34 @@ class PocketBucketViewModel(
             when (val route = state.value.route) {
                 Route.Projects -> {
                     val page = repository.projects(start)
-                    mutableState.update { it.copy(projects = (if (append) it.projects else emptyList()) + page.values,
-                        nextStart = page.nextStart, loading = false) }
+                    mutableState.update {
+                        it.copy(
+                            projects = ((if (append) it.projects else emptyList()) + page.values)
+                                .distinctBy { project -> project.key },
+                            nextStart = page.nextStart, loading = false,
+                        )
+                    }
                 }
                 is Route.Repositories -> {
                     val page = repository.repositories(route.project.key, start)
-                    mutableState.update { it.copy(repositories = (if (append) it.repositories else emptyList()) + page.values,
-                        nextStart = page.nextStart, loading = false) }
+                    mutableState.update {
+                        it.copy(
+                            repositories = ((if (append) it.repositories else emptyList()) + page.values)
+                                .distinctBy { item -> item.id },
+                            nextStart = page.nextStart, loading = false,
+                        )
+                    }
                 }
                 is Route.PullRequests -> {
                     val repo = route.repository
                     val page = repository.pullRequests(repo.project.key, repo.slug, start)
-                    mutableState.update { it.copy(pullRequests = (if (append) it.pullRequests else emptyList()) + page.values,
-                        nextStart = page.nextStart, loading = false) }
+                    mutableState.update {
+                        it.copy(
+                            pullRequests = ((if (append) it.pullRequests else emptyList()) + page.values)
+                                .distinctBy { pr -> pr.id },
+                            nextStart = page.nextStart, loading = false,
+                        )
+                    }
                 }
                 is Route.Details -> {
                     val pr = repository.pullRequest(route.repository.project.key, route.repository.slug, route.id)
