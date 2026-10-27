@@ -53,7 +53,7 @@ A macOS machine is required; Linux cannot build, sign or run the iOS app.
 4. For a physical device, choose your signing team in Signing & Capabilities and a unique bundle identifier if necessary. Configure the existing system VPN and install organization-approved trust roots through system/device management. No TLS bypass is provided.
 5. Run shared native tests with `./gradlew :core:iosSimulatorArm64Test :composeApp:iosSimulatorArm64Test` on Apple Silicon (use `iosX64Test` on Intel).
 
-The Xcode project, Darwin engine and Keychain implementation are included, but an iOS build and device Keychain/TLS checks must be executed on macOS before claiming iOS readiness. See [validation](docs/validation.md) for actual execution results.
+The `Checks` workflow includes a `macos-15` (Apple Silicon) job pinned to Xcode 16.3. It builds the complete SwiftUI app for the simulator without signing, then runs `core` and `composeApp` native tests on a booted iOS 18 simulator. The `ios-check-reports` artifact contains build logs, the Xcode result bundle and native test reports. Consult the actual Actions result before claiming a passing iOS build; Linux checks alone do not validate it. Device Keychain, VPN, TLS trust and signing still require platform validation. See [validation](docs/validation.md) for the verification boundary.
 
 ## Connect
 

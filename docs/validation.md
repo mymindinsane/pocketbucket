@@ -17,10 +17,10 @@ Executed in the Linux cloud workspace on 2026-10-27, with Temurin JDK 21.0.13, t
 
 ## Not executed / remaining verification
 
-- **iOS build, simulator launch and native tests:** not executed; this machine is Linux and has no Apple SDK/Xcode. Use the README's Xcode 16.3 / JDK 21 instructions. Native sources and the Xcode project require verification on macOS.
+- **iOS build and native tests:** the workflow now has a macOS 15 / Apple Silicon job using Xcode 16.3 and JDK 21. It builds the complete unsigned simulator app, boots an iOS 18 simulator and requires executed native tests in both modules. Check that job and its `ios-check-reports` artifact for the actual outcome. The Linux results above do not establish an iOS pass. UI/device behavior and signing remain separate checks.
 - **Android device/emulator UI and platform secure-store tests:** not executed. JVM tests do not establish Keystore/Keychain behavior, device VPN access, enterprise certificate trust, rotation, reinstall or locked-device behavior.
 - **Real Bitbucket integration:** not executed or attempted. All test payloads and accounts are fictional and all HTTP tests use MockEngine.
 - **Fresh documentation cross-check:** direct requests to the official Atlassian 8.19 references were denied by the environment egress proxy (CONNECT 403). See `bitbucket-api.md`. Required documentation domains were added to the saved environment draft; that does not apply the network policy to this running instance. Endpoint mocks are not proof of live 8.19.26 compatibility.
-- **GitHub Actions:** workflow added. The results above are local checks; remote workflow results were not verified in this report and must be checked on GitHub.
+- **GitHub Actions:** Linux and macOS jobs are configured. The results above record local checks; consult the actual remote job results on GitHub for the current commit.
 
 The foundation supports host development, offline unit testing and Android APK builds. No claim of iOS or production readiness is made. PR diffs and review actions remain later milestones.
