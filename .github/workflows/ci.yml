@@ -6,20 +6,25 @@ permissions:
   contents: read
 jobs:
   jvm-android:
-    runs-on: ubuntu-latest
+    # Keep the SDK/toolchain stable when ubuntu-latest moves to a new release.
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
       - name: Android SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+        shell: bash
+        run: |
+          # GitHub's Ubuntu image provides the SDK and accepted licenses.
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$sdkmanager"
+          "$sdkmanager" --sdk_root="$ANDROID_HOME" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
       - name: Unit tests, lint and debug APK
         run: ./gradlew :core:jvmTest :composeApp:testDebugUnitTest :composeApp:lintDebug :composeApp:assembleDebug --stacktrace
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: check-reports
