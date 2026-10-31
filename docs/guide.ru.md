@@ -415,22 +415,54 @@ Job использует macOS 15 / Apple Silicon и Xcode 16.3. Xcode соби�
 
 Для iOS нужен Mac. Linux не может заменить Xcode, Apple SDK и iOS Simulator. Минимальная заявленная версия приложения — iOS 15.0; CI выполняется на более новом iOS 18 runtime и не является проверкой минимальной версии.
 
-## Подготовка окружения
+## Сначала откройте правильную папку и ветку
 
-1. Установите Xcode 16.3 и необходимые компоненты iOS Simulator. Откройте Xcode, примите license и завершите установку компонентов.
-2. Установите JDK 21. В терминале задайте `JAVA_HOME`, как показано ниже.
-3. Поскольку root-проект включает Android Gradle Plugin, для надёжной настройки общего проекта установите также Android SDK 35 и build-tools 35.0.0 через Android Studio или command-line tools. Укажите `ANDROID_HOME` либо `sdk.dir` в игнорируемом `local.properties`.
-4. Получите ветку проекта, проверьте `git status` и не помещайте локальные пути или credentials в tracked-файлы.
+Уточнение инструкции от **31 октября 2026**: реализация пока находится в ветке `feat/milestone-1-foundation` (PR #1). В исходной `main` есть только README и LICENSE, поэтому там нет `gradlew`. Название папки `pocketbucket` само по себе не означает, что выбрана ветка с приложением.
+
+Если репозиторий ещё не скачан, выполните в каталоге, где хотите разместить проект:
 
 ```sh
-export JAVA_HOME=$(/usr/libexec/java_home -v 21)
-export DEVELOPER_DIR=/Applications/Xcode_16.3.app/Contents/Developer
-java -version
+git clone --branch feat/milestone-1-foundation https://github.com/mymindinsane/pocketbucket.git
+cd pocketbucket
+ls gradlew settings.gradle.kts
+```
+
+Если репозиторий уже скачан, откройте его папку. Удобный способ для новичка: наберите в Terminal `cd ` с пробелом, перетащите папку проекта из Finder в Terminal и нажмите Enter. Путь подставится с учётом пробелов. Затем:
+
+```sh
+pwd
+git status --short --branch
+git fetch origin
+git switch feat/milestone-1-foundation
+ls gradlew settings.gradle.kts
+```
+
+Команды сборки выполняются именно из корня, где находятся `gradlew` и `settings.gradle.kts`, а не из домашнего каталога или `iosApp`. Если Git сообщает о мешающих локальных изменениях, сначала разберите их; не применяйте reset/clean, чтобы заставить переключение выполниться. Если уже скачана нужная ветка, повторное клонирование не требуется.
+
+## Подготовка окружения
+
+1. Установите поддерживаемый toolchain Xcode 16.3 и необходимые компоненты iOS Simulator. Откройте Xcode, примите license и завершите установку компонентов. Имя приложения может быть `Xcode.app` или другим: номер версии узнаётся командой, а не из имени файла.
+2. Установите JDK 21. В терминале задайте `JAVA_HOME`, как показано ниже.
+3. Поскольку root-проект включает Android Gradle Plugin, для надёжной настройки общего проекта установите также Android SDK 35 и build-tools 35.0.0 через Android Studio или command-line tools. Укажите `ANDROID_HOME` либо `sdk.dir` в игнорируемом `local.properties`.
+4. Не помещайте локальные пути или credentials в tracked-файлы.
+
+Сначала удалите возможный неверный override и проверьте реально выбранный Xcode:
+
+```sh
+unset DEVELOPER_DIR
+xcode-select -p
 xcodebuild -version
+xcrun --sdk iphonesimulator --show-sdk-version
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+java -version
 ./gradlew --version
 ```
 
-Путь Xcode в примере должен соответствовать установленному приложению. Системный Xcode по умолчанию может быть новее; его совместимость с закреплённым Kotlin/Native нужно проверять отдельно. Нельзя считать, что любое обновление Xcode безопасно для старого compiler toolchain.
+Например, корректный выбранный путь может выглядеть как `/Applications/Xcode.app/Contents/Developer`. Не задавайте `/Applications/Xcode_16.3.app/Contents/Developer`, если такой папки на вашем Mac нет: это имя установки на CI-runner, а не обязательное имя Xcode на каждом Mac. `DEVELOPER_DIR` имеет приоритет над системным выбором, поэтому устаревшее значение ломает даже правильно установленный Xcode.
+
+Если `xcode-select -p` показывает несуществующий путь или `/Library/Developer/CommandLineTools`, выберите установленный полный Xcode в **Xcode → Settings → Locations → Command Line Tools**. Только отдельные Command Line Tools не заменяют Xcode и iOS SDK. Если неверный export записан в настройках shell, например `.zshrc`, исправьте его и там, иначе он вернётся в новом Terminal.
+
+Проект проверен с Xcode 16.3 и Kotlin 2.1.21. Xcode 27.2, например, не становится совместимым от одного исправления пути: эту комбинацию текущий CI не проверял. Для точного воспроизведения CI нужен проверенный toolchain; использование нового Xcode требует отдельной проверки совместимости и, возможно, обновления зависимостей. Не устанавливайте выдуманную версию пути только ради совпадения с примером.
 
 ## Первый запуск на Apple Silicon
 
@@ -458,6 +490,8 @@ CI не создаёт готовый подписанный IPA для прои
 
 | Симптом | Что проверить |
 | --- | --- |
+| `missing DEVELOPER_DIR path` | Удалить неверный override через `unset DEVELOPER_DIR`, проверить реально установленный и выбранный Xcode |
+| `./gradlew: no such file or directory` | Проверить корень проекта и ветку с реализацией; chmod не создаёт отсутствующий файл |
 | Framework не находится | Открыта ли правильная схема, отработал ли Gradle build phase, правильная ли архитектура |
 | MainViewControllerKt не найден | Различаются ли module name host и framework; в текущей версии это исправлено |
 | Нет подходящего симулятора | Установлен ли runtime, доступный выбранному Xcode |

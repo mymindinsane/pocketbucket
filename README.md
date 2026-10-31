@@ -49,11 +49,33 @@ Open the root project in Android Studio and run `composeApp`, or install `compos
 
 A macOS machine is required; Linux cannot build, sign or run the iOS app.
 
-1. Install Xcode 16.3, its command-line tools and an iOS Simulator runtime. Accept the Xcode license. Install JDK 21 and select it with `export JAVA_HOME=$(/usr/libexec/java_home -v 21)`.
-2. From the repository root, run `./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64` (Apple Silicon) or `:composeApp:linkDebugFrameworkIosX64` (Intel). Native targets are registered on macOS only.
-3. Open `iosApp/iosApp.xcodeproj`, select the shared **iosApp** scheme and an iOS Simulator, then Run. The build phase invokes `:composeApp:embedAndSignAppleFrameworkForXcode` and links the static `PocketBucket` framework. CocoaPods and a backend are not required.
-4. For a physical device, choose your signing team in Signing & Capabilities and a unique bundle identifier if necessary. Configure the existing system VPN and install organization-approved trust roots through system/device management. No TLS bypass is provided.
-5. Run shared native tests with `./gradlew :core:iosSimulatorArm64Test :composeApp:iosSimulatorArm64Test` on Apple Silicon (use `iosX64Test` on Intel).
+The foundation currently lives in `feat/milestone-1-foundation` (PR #1); the initial `main` does not contain `gradlew` yet. For a new checkout:
+
+```sh
+git clone --branch feat/milestone-1-foundation https://github.com/mymindinsane/pocketbucket.git
+cd pocketbucket
+ls gradlew settings.gradle.kts
+```
+
+For an existing Git checkout, open its root directory, inspect `git status --short --branch`, then use `git fetch origin` and `git switch feat/milestone-1-foundation`. Do not use reset/clean to resolve local changes. Run all `./gradlew` commands from the directory containing `gradlew` and `settings.gradle.kts`, not from `iosApp` or your home directory.
+
+1. Install the supported Xcode 16.3 toolchain, an iOS Simulator runtime and JDK 21. Accept the Xcode license and finish component installation. The application may be named `Xcode.app` or a custom versioned name; its name does not establish its version.
+2. Remove any stale shell override and inspect the actual selected installation:
+
+   ```sh
+   unset DEVELOPER_DIR
+   xcode-select -p
+   xcodebuild -version
+   xcrun --sdk iphonesimulator --show-sdk-version
+   export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+   ./gradlew --version
+   ```
+
+   If the selected path is missing or points to `/Library/Developer/CommandLineTools`, select an installed full Xcode in **Xcode → Settings → Locations → Command Line Tools**. Do not copy the CI-only `/Applications/Xcode_16.3.app` path unless that installation actually exists locally. A newer Xcode, including 27.2, is not validated by the current Kotlin 2.1.21 / Xcode 16.3 CI result; check compatibility before building with it.
+3. From the repository root, run `./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64` (Apple Silicon) or `:composeApp:linkDebugFrameworkIosX64` (Intel). Native targets are registered on macOS only.
+4. Open `iosApp/iosApp.xcodeproj`, select the shared **iosApp** scheme and an iOS Simulator, then Run. The build phase invokes `:composeApp:embedAndSignAppleFrameworkForXcode` and links the static `PocketBucket` framework. CocoaPods and a backend are not required.
+5. For a physical device, choose your signing team in Signing & Capabilities and a unique bundle identifier if necessary. Configure the existing system VPN and install organization-approved trust roots through system/device management. No TLS bypass is provided.
+6. Run shared native tests with `./gradlew :core:iosSimulatorArm64Test :composeApp:iosSimulatorArm64Test` on Apple Silicon (use `iosX64Test` on Intel).
 
 The `Checks` workflow includes a `macos-15` (Apple Silicon) job pinned to Xcode 16.3. It builds the complete SwiftUI app for the simulator without signing, then runs `core` and `composeApp` native tests on a booted iOS 18 simulator. The `ios-check-reports` artifact contains build logs, the Xcode result bundle and native test reports. Consult the actual Actions result before claiming a passing iOS build; Linux checks alone do not validate it. Device Keychain, VPN, TLS trust and signing still require platform validation. See [validation](docs/validation.md) for the verification boundary.
 
